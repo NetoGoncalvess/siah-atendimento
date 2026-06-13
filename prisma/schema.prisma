@@ -1,0 +1,139 @@
+// Schema do banco de dados do sistema de atendimento (chat + tickets)
+// Provider: PostgreSQL (recomendado: Neon ou Supabase)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ── Setores (ex: Suporte Sistema A7, Financeiro, Assistência Técnica) ────────
+model Setor {
+  id        String     @id @default(cuid())
+  nome      String     @unique
+  ativo     Boolean    @default(true)
+  createdAt DateTime   @default(now())
+
+  atendentes Atendente[]
+  tickets    Ticket[]
+}
+
+// ── Atendentes (usuários do painel) ──────────────────────────────────────────
+model Atendente {
+  id        String   @id @default(cuid())
+  nome      String
+  email     String   @unique
+  senhaHash String
+  ativo     Boolean  @default(true)
+  setorId   String?
+  setor     Setor?   @relation(fields: [setorId], references: [id])
+  createdAt DateTime @default(now())
+
+  tickets  Ticket[]
+  mensagens Mensagem[]
+}
+
+// ── Contatos (clientes que escrevem pelo WhatsApp) ───────────────────────────
+model Contato {
+  id        String   @id @default(cuid())
+  telefone  String   @unique // número no formato E.164, ex: 5592999999999
+  nome      String?
+  empresa   String?
+  createdAt DateTime @default(now())
+
+  tickets Ticket[]
+}
+
+enum StatusTicket {
+  Atendendo
+  AguardandoAvaliacao
+  Fechado
+  Cancelado
+  FechadoAssistenteVirtualInatividade
+}
+
+enum Prioridade {
+  Baixa
+  Media
+  Alta
+}
+
+// ── Tickets / conversas ───────────────────────────────────────────────────────
+model Ticket {
+  id          String       @id @default(cuid())
+  protocolo   String       @unique // gerado automaticamente, ex: 20260613-0001
+  status      StatusTicket @default(Atendendo)
+  prioridade  Prioridade   @default(Media)
+
+  contatoId   String
+  contato     Contato      @relation(fields: [contatoId], references: [id])
+
+  setorId     String?
+  setor       Setor?       @relation(fields: [setorId], references: [id])
+
+  atendenteId String?
+  atendente   Atendente?   @relation(fields: [atendenteId], references: [id])
+
+  abertura    DateTime     @default(now())
+  fechamento  DateTime?
+
+  solucao     String?      // solução do problema / motivo cancelamento
+  descricao   String?
+
+  // Tempo da 1ª resposta do atendente, em segundos (calculado ao enviar a 1ª mensagem)
+  tempoPrimeiraRespostaSeg Int?
+
+  criadoPor   String?      // "Sistema", "Portal", nome de quem abriu manualmente, etc.
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  mensagens   Mensagem[]
+
+  @@index([status])
+  @@index([setorId])
+  @@index([atendenteId])
+}
+
+enum DirecaoMensagem {
+  ENTRADA // do contato para o sistema
+  SAIDA   // do atendente para o contato
+}
+
+enum TipoMensagem {
+  TEXTO
+  IMAGEM
+  AUDIO
+  VIDEO
+  DOCUMENTO
+  LOCALIZACAO
+  OUTRO
+}
+
+// ── Mensagens trocadas dentro de um ticket ───────────────────────────────────
+model Mensagem {
+  id          String          @id @default(cuid())
+
+  ticketId    String
+  ticket      Ticket          @relation(fields: [ticketId], references: [id])
+
+  direcao     DirecaoMensagem
+  tipo        TipoMensagem    @default(TEXTO)
+  conteudo    String          // texto da mensagem ou URL da mídia
+  legenda     String?         // caption de mídia, se houver
+
+  // Identificadores da WhatsApp Cloud API (para rastrear status de entrega)
+  whatsappMessageId String?   @unique
+  status      String?         // sent | delivered | read | failed
+
+  atendenteId String?
+  atendente   Atendente?      @relation(fields: [atendenteId], references: [id])
+
+  createdAt   DateTime        @default(now())
+
+  @@index([ticketId])
+}

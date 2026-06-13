@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f4f5f7;
+  --foreground: #1f2533;
+
+  --bg-card: #ffffff;
+  --bg-secondary: #f6f7f9;
+  --bg-tertiary: #eef0f3;
+
+  --text-primary: #1f2533;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9aa0ab;
+
+  --border: rgba(0, 0, 0, 0.08);
+  --border-md: rgba(0, 0, 0, 0.14);
+
+  --blue:   #2f6fed;
+  --green:  #1e9e3d;
+  --orange: #f2994a;
+  --red:    #e5484d;
+  --purple: #7c5cfc;
+  --cyan:   #17a2b8;
+  --indigo: #3f51b5;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--bg-card);
+  --color-secondary: var(--bg-secondary);
+  --color-tertiary: var(--bg-tertiary);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+
+  --color-border: var(--border);
+  --color-border-md: var(--border-md);
+
+  --color-blue: var(--blue);
+  --color-green: var(--green);
+  --color-orange: var(--orange);
+  --color-red: var(--red);
+  --color-purple: var(--purple);
+  --color-cyan: var(--cyan);
+  --color-indigo: var(--indigo);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* O dashboard usa tema claro fixo (sem dark mode automatico) */
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
