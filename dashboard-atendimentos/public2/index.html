@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Atendimentos</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title"><i class="ti ti-headset"></i> Dashboard de atendimentos</div>
+        <div class="topbar-sub">Carregue um arquivo Excel para visualizar os dados</div>
+      </div>
+      <div class="topbar-right" id="lastUpdate"></div>
+    </div>
+
+    <div id="uploadSection">
+      <div class="upload-zone" id="dropZone">
+        <div class="upload-icon"><i class="ti ti-file-spreadsheet"></i></div>
+        <div class="upload-title">Arraste seu Excel aqui</div>
+        <div class="upload-hint">ou clique para selecionar o arquivo de exportação</div>
+        <label class="upload-btn">
+          <i class="ti ti-upload"></i> Selecionar arquivo
+          <input type="file" id="fileInput" accept=".xlsx,.xls">
+        </label>
+      </div>
+    </div>
+
+    <div id="dashSection" style="display:none">
+      <div class="filters">
+        <span class="filter-label">Filtros</span>
+        <select class="filter-sel" id="fStatus"><option value="">Status: Todos</option></select>
+        <select class="filter-sel" id="fAtendente"><option value="">Atendente: Todos</option></select>
+        <select class="filter-sel" id="fSetor"><option value="">Setor: Todos</option></select>
+        <button class="btn-clear" onclick="clearFilters()"><i class="ti ti-x"></i> Limpar filtros</button>
+        <div style="margin-left:auto">
+          <label class="upload-btn" style="font-size:12px;padding:6px 14px">
+            <i class="ti ti-refresh"></i> Novo arquivo
+            <input type="file" id="fileInput2" accept=".xlsx,.xls" style="display:none">
+          </label>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="metrics" id="metrics"></div>
+
+        <div class="charts-row">
+          <div class="card">
+            <div class="card-title">Status dos chamados</div>
+            <div class="leg-row" id="legendStatus"></div>
+            <div style="position:relative;height:200px">
+              <canvas id="chartStatus" role="img" aria-label="Gráfico de rosca com status dos chamados"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Fluxo por horário</div>
+            <div style="position:relative;height:230px">
+              <canvas id="chartHoras" role="img" aria-label="Gráfico de linha com volume de chamados por hora"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="charts-row">
+          <div class="card">
+            <div class="card-title">Por atendente</div>
+            <div id="barAtend"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Por setor</div>
+            <div id="barSetor"></div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <div class="card-title" style="margin:0">Lista de atendimentos</div>
+            <input class="tbl-search" id="tblSearch" placeholder="Buscar..." oninput="renderTable()">
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Protocolo</th>
+                  <th>Abertura</th>
+                  <th>Canal</th>
+                  <th>Atendente</th>
+                  <th>Empresa</th>
+                  <th>Setor</th>
+                  <th>1ª resp (min)</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="tblBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

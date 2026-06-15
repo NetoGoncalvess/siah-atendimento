@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Atendimentos</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+  <style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-page: #f4f5f7;
+  --bg-card: #ffffff;
+  --bg-secondary: #f6f7f9;
+  --bg-tertiary: #eef0f3;
+  --text-primary: #1f2533;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9aa0ab;
+  --border: rgba(0,0,0,0.08);
+  --border-md: rgba(0,0,0,0.14);
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --blue:   #2f6fed;
+  --green:  #1e9e3d;
+  --orange: #f2994a;
+  --red:    #e5484d;
+  --purple: #7c5cfc;
+  --cyan:   #17a2b8;
+  --indigo: #3f51b5;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+.app { min-height: 100vh; }
+
+/* Topbar */
+.topbar {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.topbar-title { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+.topbar-title i { margin-right: 8px; color: var(--blue); }
+.topbar-sub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+.topbar-update { font-size: 12px; color: var(--text-tertiary); text-align: right; }
+.topbar-update i { margin-right: 4px; }
+
+/* Export */
+.export-wrap { position: relative; }
+.btn-export {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--blue); color: #fff; border: none;
+  padding: 9px 16px; border-radius: var(--radius-md);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.btn-export:hover { background: #2861d6; }
+.export-menu {
+  position: absolute; right: 0; top: calc(100% + 6px);
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  min-width: 160px; z-index: 20; overflow: hidden; display: none;
+}
+.export-menu.open { display: block; }
+.export-menu button {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 10px 14px; background: none; border: none; text-align: left;
+  font-size: 13px; color: var(--text-primary); cursor: pointer;
+}
+.export-menu button:hover { background: var(--bg-secondary); }
+
+/* Upload */
+.upload-zone {
+  margin: 40px auto;
+  max-width: 520px;
+  background: var(--bg-card);
+  border: 1.5px dashed var(--border-md);
+  border-radius: var(--radius-lg);
+  padding: 52px 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.upload-zone:hover { border-color: var(--blue); }
+.upload-zone.drag { border-color: var(--blue); background: rgba(47,111,237,0.04); }
+.upload-icon { font-size: 40px; color: var(--text-tertiary); margin-bottom: 12px; }
+.upload-title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+.upload-hint { font-size: 13px; color: var(--text-secondary); }
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  padding: 9px 20px;
+  background: var(--blue);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: #fff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s;
+}
+.upload-btn:hover { background: #2861d6; }
+.upload-btn.secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-md);
+  font-weight: 500;
+}
+.upload-btn.secondary:hover { background: var(--bg-tertiary); }
+#fileInput, #fileInput2 { display: none; }
+
+/* Filters */
+.filters-card {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+}
+.filters-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-end;
+}
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 150px;
+}
+.filter-group.wide { min-width: 230px; }
+.filter-group label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.filter-sel, .filter-date {
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+  height: 36px;
+}
+.filter-sel:focus, .filter-date:focus { border-color: var(--blue); }
+.date-range { display: flex; align-items: center; gap: 6px; }
+.date-range span { color: var(--text-tertiary); font-size: 12px; }
+.filter-date { cursor: text; flex: 1; min-width: 0; }
+
+.btn-filtrar {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--blue); color: #fff; border: none;
+  padding: 0 18px; height: 36px; border-radius: var(--radius-md);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.btn-filtrar:hover { background: #2861d6; }
+.btn-clear {
+  font-size: 12px;
+  color: var(--blue);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 36px;
+}
+
+/* Content */
+.content { padding: 20px 24px; }
+
+/* Metrics */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.mc {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+}
+.mc-icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  margin-bottom: 14px;
+}
+.mc.c-blue   .mc-icon { background: rgba(47,111,237,.12);  color: var(--blue); }
+.mc.c-green  .mc-icon { background: rgba(30,158,61,.12);   color: var(--green); }
+.mc.c-orange .mc-icon { background: rgba(242,153,74,.14);  color: var(--orange); }
+.mc.c-red    .mc-icon { background: rgba(229,72,77,.12);   color: var(--red); }
+.mc.c-purple .mc-icon { background: rgba(124,92,252,.12);  color: var(--purple); }
+.mc.c-cyan   .mc-icon { background: rgba(23,162,184,.12);  color: var(--cyan); }
+.mc.c-indigo .mc-icon { background: rgba(63,81,181,.12);   color: var(--indigo); }
+
+.mc-val { font-size: 26px; font-weight: 700; color: var(--text-primary); line-height: 1; }
+.mc-lbl { font-size: 11px; color: var(--text-secondary); margin-top: 6px; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+.mc-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+
+/* Charts */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+@media (max-width: 1100px) { .charts-row { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 700px) { .charts-row { grid-template-columns: 1fr; } }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+}
+.card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 2px;
+}
+.card-sub {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-bottom: 12px;
+}
+.leg-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
+.leg-sq { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+
+/* Table */
+.table-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+}
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.tbl-search-wrap { position: relative; }
+.tbl-search-wrap i {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--text-tertiary); font-size: 14px;
+}
+.tbl-search {
+  font-size: 13px;
+  padding: 7px 12px 7px 30px;
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  width: 220px;
+  outline: none;
+}
+.tbl-search:focus { border-color: var(--blue); }
+.page-size-wrap {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text-secondary);
+}
+.page-size-wrap select {
+  font-size: 13px; padding: 6px 8px;
+  border: 1px solid var(--border-md); border-radius: var(--radius-md);
+  background: var(--bg-card); color: var(--text-primary); cursor: pointer;
+}
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+  background: var(--bg-secondary);
+}
+td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg-secondary); }
+.cell-sub { display: block; font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
+
+/* Badges */
+.badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.b-Fechado        { background: #E6F6EA; color: #1E9E3D; }
+.b-Cancelado      { background: #FDE8E8; color: #E5484D; }
+.b-Bot            { background: #FFF1E0; color: #B5680E; }
+.b-Atendendo      { background: #E7F0FE; color: #2F6FED; }
+.b-Aguardando     { background: #EFEBFF; color: #7C5CFC; }
+
+.b-prio-Alta   { background: #FDE8E8; color: #E5484D; }
+.b-prio-Media  { background: #FFF1E0; color: #B5680E; }
+.b-prio-Baixa  { background: #E6F6EA; color: #1E9E3D; }
+.b-prio-default{ background: var(--bg-tertiary); color: var(--text-secondary); }
+
+/* Pagination */
+.pagination {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 14px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.pagination .pg-info { margin-right: auto; font-size: 12px; color: var(--text-tertiary); }
+.pg-btn {
+  padding: 5px 11px;
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 12px;
+  transition: background .15s;
+}
+.pg-btn:hover:not(:disabled) { background: var(--bg-secondary); }
+.pg-btn:disabled { opacity: .4; cursor: default; }
+.pg-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+.pg-ellipsis { color: var(--text-tertiary); padding: 0 4px; }
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title"><i class="ti ti-headset"></i>Dashboard de Atendimentos</div>
+        <div class="topbar-sub">Visão geral dos atendimentos registrados</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-update" id="lastUpdate"></div>
+        <div class="export-wrap" id="exportWrap" style="display:none">
+          <button class="btn-export" id="btnExport"><i class="ti ti-download"></i> Exportar <i class="ti ti-chevron-down"></i></button>
+          <div class="export-menu" id="exportMenu">
+            <button onclick="exportData('xlsx')"><i class="ti ti-file-spreadsheet"></i> Excel (.xlsx)</button>
+            <button onclick="exportData('csv')"><i class="ti ti-file-text"></i> CSV</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="uploadSection">
+      <div class="upload-zone" id="dropZone">
+        <div class="upload-icon"><i class="ti ti-file-spreadsheet"></i></div>
+        <div class="upload-title">Arraste seu Excel aqui</div>
+        <div class="upload-hint">ou clique para selecionar o arquivo de exportação</div>
+        <label class="upload-btn">
+          <i class="ti ti-upload"></i> Selecionar arquivo
+          <input type="file" id="fileInput" accept=".xlsx,.xls">
+        </label>
+        <button class="upload-btn secondary" style="margin-left:8px" onclick="loadSampleData()">
+          <i class="ti ti-flask"></i> Ver exemplo com dados fictícios
+        </button>
+      </div>
+    </div>
+
+    <div id="dashSection" style="display:none">
+      <div class="filters-card">
+        <div class="filters-label">Filtros</div>
+        <div class="filters-row">
+          <div class="filter-group wide">
+            <label>Período</label>
+            <div class="date-range">
+              <input type="date" class="filter-date" id="fDataIni">
+              <span>até</span>
+              <input type="date" class="filter-date" id="fDataFim">
+            </div>
+          </div>
+          <div class="filter-group">
+            <label>Setor</label>
+            <select class="filter-sel" id="fSetor"><option value="">Todos</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Atendente</label>
+            <select class="filter-sel" id="fAtendente"><option value="">Todos</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Status</label>
+            <select class="filter-sel" id="fStatus"><option value="">Todos</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Prioridade</label>
+            <select class="filter-sel" id="fPrioridade"><option value="">Todas</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Canal de Abertura</label>
+            <select class="filter-sel" id="fCanal"><option value="">Todos</option></select>
+          </div>
+          <div class="filter-group" style="flex-direction:row; gap:8px;">
+            <button class="btn-filtrar" onclick="applyFilters()"><i class="ti ti-search"></i> Filtrar</button>
+            <button class="btn-clear" onclick="clearFilters()"><i class="ti ti-refresh"></i> Limpar filtros</button>
+          </div>
+          <div class="filter-group" style="margin-left:auto; flex-direction:row;">
+            <label class="upload-btn secondary" style="font-size:12px;padding:8px 14px;height:36px;">
+              <i class="ti ti-refresh"></i> Novo arquivo
+              <input type="file" id="fileInput2" accept=".xlsx,.xls" style="display:none">
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="metrics" id="metrics"></div>
+
+        <div class="charts-row">
+          <div class="card">
+            <div class="card-title">Tempo da 1ª resposta por setor</div>
+            <div class="card-sub">(Média em minutos)</div>
+            <div style="position:relative;height:230px">
+              <canvas id="chartSetor" role="img" aria-label="Gráfico de barras com tempo médio de 1ª resposta por setor"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Horário com maior fluxo</div>
+            <div class="card-sub">(Quantidade de chamados)</div>
+            <div style="position:relative;height:230px">
+              <canvas id="chartHoras" role="img" aria-label="Gráfico de linha com volume de chamados por hora"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Soluções / motivo cancelamento</div>
+            <div class="card-sub">(Top 7)</div>
+            <div style="position:relative;height:230px">
+              <canvas id="chartMotivos" role="img" aria-label="Gráfico de barras com principais motivos e soluções"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <div class="card-title" style="margin:0">Lista de atendimentos</div>
+            <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap">
+              <div class="page-size-wrap">
+                Mostrar
+                <select id="pageSize" onchange="changePageSize()">
+                  <option value="10">10</option>
+                  <option value="15" selected>15</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+                registros
+              </div>
+              <div class="tbl-search-wrap">
+                <i class="ti ti-search"></i>
+                <input class="tbl-search" id="tblSearch" placeholder="Buscar..." oninput="renderTable()">
+              </div>
+            </div>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Protocolo</th>
+                  <th>Data e Hora da Abertura</th>
+                  <th>Canal de Abertura</th>
+                  <th>Tempo Atendimento (min)</th>
+                  <th>Tempo 1ª Resposta (min)</th>
+                  <th>Fechamento/Cancelamento</th>
+                  <th>Solução / Motivo Cancelamento</th>
+                  <th>Tempo Resolução (dias)</th>
+                  <th>Setor</th>
+                  <th>Prioridade</th>
+                  <th>Status</th>
+                  <th>Criado Por</th>
+                  <th>Atendente</th>
+                  <th>Contato / Empresa</th>
+                </tr>
+              </thead>
+              <tbody id="tblBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+'use strict';
+
+let allData = [];
+let filteredData = [];
+let chartSetor = null;
+let chartHoras = null;
+let chartMotivos = null;
+let currentPage = 1;
+let pageSize = 15;
+
+const STATUS_MAP = {
+  'Fechado':                             { label: 'Fechado',        cls: 'b-Fechado',    color: '#1E9E3D' },
+  'Cancelado':                           { label: 'Cancelado',      cls: 'b-Cancelado',  color: '#E5484D' },
+  'FechadoAssistenteVirtualInatividade': { label: 'Bot/Inativ.',    cls: 'b-Bot',        color: '#F2994A' },
+  'Atendendo':                           { label: 'Atendendo',      cls: 'b-Atendendo',  color: '#2F6FED' },
+  'AguardandoAvaliacao':                 { label: 'Ag. avaliação',  cls: 'b-Aguardando', color: '#7C5CFC' },
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+// Picks the first non-empty value among several possible Excel header names
+function pick(row, keys) {
+  for (const k of keys) {
+    if (row[k] !== undefined && row[k] !== null && row[k] !== '') return row[k];
+  }
+  return '';
+}
+
+function pickNum(row, keys) {
+  const v = pick(row, keys);
+  const n = parseFloat(String(v).replace(',', '.'));
+  return isNaN(n) ? 0 : n;
+}
+
+// Parses dates like "31/05/2024 - 08:15", "31/05/2024 08:15", "2024-05-31 08:15"
+function parseDateStr(s) {
+  if (!s) return null;
+  const str = String(s);
+  let m = str.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+  m = str.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  return null;
+}
+
+function getHour(s) {
+  if (!s) return null;
+  const m = String(s).match(/(\d{2}):(\d{2})/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+const esc = s => String(s == null ? '' : s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function prioClass(p) {
+  const norm = String(p || '').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (norm.includes('alta')) return 'b-prio-Alta';
+  if (norm.includes('media')) return 'b-prio-Media';
+  if (norm.includes('baixa')) return 'b-prio-Baixa';
+  return 'b-prio-default';
+}
+
+// ── File parsing ─────────────────────────────────────────────────────────────
+
+function parseXLSX(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      allData = json.map(r => ({
+        protocolo:    pick(r, ['Protocolo']),
+        abertura:     pick(r, ['Data e Hora da Abertura', 'Data e Hora de Abertura', 'Abertura']),
+        canal:        pick(r, ['Canal de Abertura', 'Canal']),
+        detalhes:     pick(r, ['Detalhes do canal de Abertura', 'Detalhes do Canal de Abertura']),
+        atendente:    pick(r, ['Atendente']),
+        setor:        pick(r, ['Setor']),
+        status:       pick(r, ['Status']),
+        prioridade:   pick(r, ['Prioridade']),
+        criadoPor:    pick(r, ['Atendimento Criado Por', 'Criado Por']),
+        contato:      pick(r, ['Nome do Contato', 'Contato']),
+        empresa:      pick(r, ['Empresa']),
+        resposta:     pickNum(r, ['Tempo da Primeira Resposta (minutos)', 'Tempo da 1ª Resposta (minutos)', 'Tempo da 1ª Resposta (min)']),
+        tempoAtend:   pickNum(r, ['Tempo Gasto no Atendimento (minutos)', 'Tempo Gasto no Atendimento (min)', 'Tempo de Atendimento (minutos)']),
+        fechamento:   pick(r, ['Data e Hora do Fechamento/Cancelamento', 'Data e Hora de Fechamento/Cancelamento', 'Fechamento']),
+        tempoResol:   pickNum(r, ['Tempo Resolução do Chamado (dias)', 'Tempo de Resolução do Chamado (dias)', 'Tempo Resolução (dias)']),
+        solucao:      pick(r, ['Solução do Problema/Motivo Cancelamento', 'Solução do Problema / Motivo Cancelamento']),
+        descricao:    pick(r, ['Descrição do Problema']),
+      }));
+
+      populateFilters();
+      document.getElementById('uploadSection').style.display = 'none';
+      document.getElementById('dashSection').style.display = 'block';
+      document.getElementById('exportWrap').style.display = 'block';
+      document.getElementById('lastUpdate').innerHTML =
+        '<i class="ti ti-clock"></i> Atualizado: ' + new Date().toLocaleString('pt-BR');
+      currentPage = 1;
+      update();
+    } catch (err) {
+      alert('Erro ao ler o arquivo. Verifique se é um Excel válido.\n' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── Filters ───────────────────────────────────────────────────────────────────
+
+function populateFilters() {
+  const unique = key => [...new Set(allData.map(r => r[key]).filter(Boolean))].sort();
+
+  const fill = (id, placeholder, values, labelFn) => {
+    const el = document.getElementById(id);
+    el.innerHTML = `<option value="">${placeholder}</option>` +
+      values.map(v => `<option value="${esc(v)}">${esc(labelFn ? labelFn(v) : v)}</option>`).join('');
+  };
+
+  fill('fStatus',     'Todos', [...new Set(allData.map(r => r.status).filter(Boolean))], v => STATUS_MAP[v]?.label || v);
+  fill('fAtendente',  'Todos', unique('atendente'));
+  fill('fSetor',      'Todos', unique('setor'));
+  fill('fPrioridade', 'Todas', unique('prioridade'));
+  fill('fCanal',      'Todos', unique('canal'));
+}
+
+function getFiltered() {
+  const fS    = document.getElementById('fStatus').value;
+  const fA    = document.getElementById('fAtendente').value;
+  const fSt   = document.getElementById('fSetor').value;
+  const fP    = document.getElementById('fPrioridade').value;
+  const fC    = document.getElementById('fCanal').value;
+  const dIni  = document.getElementById('fDataIni').value;
+  const dFim  = document.getElementById('fDataFim').value;
+  const q     = (document.getElementById('tblSearch')?.value || '').toLowerCase().trim();
+
+  const dataIni = dIni ? new Date(dIni + 'T00:00:00') : null;
+  const dataFim = dFim ? new Date(dFim + 'T23:59:59') : null;
+
+  return allData.filter(r => {
+    if (fS  && r.status     !== fS)  return false;
+    if (fA  && r.atendente  !== fA)  return false;
+    if (fSt && r.setor      !== fSt) return false;
+    if (fP  && r.prioridade !== fP)  return false;
+    if (fC  && r.canal      !== fC)  return false;
+
+    if (dataIni || dataFim) {
+      const d = parseDateStr(r.abertura);
+      if (!d) return false;
+      if (dataIni && d < dataIni) return false;
+      if (dataFim && d > dataFim) return false;
+    }
+
+    if (q && !Object.values(r).join(' ').toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function applyFilters() {
+  currentPage = 1;
+  update();
+}
+
+function clearFilters() {
+  ['fStatus', 'fAtendente', 'fSetor', 'fPrioridade', 'fCanal'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('fDataIni').value = '';
+  document.getElementById('fDataFim').value = '';
+  const s = document.getElementById('tblSearch');
+  if (s) s.value = '';
+  currentPage = 1;
+  update();
+}
+
+function changePageSize() {
+  pageSize = parseInt(document.getElementById('pageSize').value, 10) || 15;
+  currentPage = 1;
+  renderTable();
+}
+
+// ── Main update ───────────────────────────────────────────────────────────────
+
+function update() {
+  filteredData = getFiltered();
+  renderMetrics(filteredData);
+  renderChartSetor(filteredData);
+  renderChartHoras(filteredData);
+  renderChartMotivos(filteredData);
+  renderTable();
+}
+
+// ── Metrics ───────────────────────────────────────────────────────────────────
+
+function renderMetrics(data) {
+  const total      = data.length;
+  const resolvidos = data.filter(r => r.status === 'Fechado' || r.status === 'FechadoAssistenteVirtualInatividade').length;
+  const emAndamento = data.filter(r => r.status === 'Atendendo' || r.status === 'AguardandoAvaliacao').length;
+  const cancelados = data.filter(r => r.status === 'Cancelado').length;
+
+  const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+
+  const tempoAtendVals = data.map(r => r.tempoAtend).filter(v => v > 0);
+  const respVals       = data.map(r => r.resposta).filter(v => v > 0);
+  const resolVals      = data.map(r => r.tempoResol).filter(v => v > 0);
+
+  const tempoAtendAvg = Math.round(avg(tempoAtendVals));
+  const respAvg       = Math.round(avg(respVals));
+  const resolAvg      = avg(resolVals);
+
+  const pct = v => total ? Math.round(v / total * 100) + '%' : '0%';
+
+  document.getElementById('metrics').innerHTML = `
+    <div class="mc c-blue">
+      <div class="mc-icon"><i class="ti ti-headset"></i></div>
+      <div class="mc-val">${total}</div>
+      <div class="mc-lbl">Total de chamados</div>
+      <div class="mc-sub">100% do total</div>
+    </div>
+    <div class="mc c-green">
+      <div class="mc-icon"><i class="ti ti-circle-check"></i></div>
+      <div class="mc-val">${resolvidos}</div>
+      <div class="mc-lbl">Resolvidos</div>
+      <div class="mc-sub">${pct(resolvidos)} do total</div>
+    </div>
+    <div class="mc c-orange">
+      <div class="mc-icon"><i class="ti ti-clock-pause"></i></div>
+      <div class="mc-val">${emAndamento}</div>
+      <div class="mc-lbl">Em andamento</div>
+      <div class="mc-sub">${pct(emAndamento)} do total</div>
+    </div>
+    <div class="mc c-red">
+      <div class="mc-icon"><i class="ti ti-x"></i></div>
+      <div class="mc-val">${cancelados}</div>
+      <div class="mc-lbl">Cancelados</div>
+      <div class="mc-sub">${pct(cancelados)} do total</div>
+    </div>
+    <div class="mc c-purple">
+      <div class="mc-icon"><i class="ti ti-stopwatch"></i></div>
+      <div class="mc-val">${tempoAtendVals.length ? tempoAtendAvg + ' min' : '-'}</div>
+      <div class="mc-lbl">Tempo médio atendimento</div>
+    </div>
+    <div class="mc c-cyan">
+      <div class="mc-icon"><i class="ti ti-message-circle"></i></div>
+      <div class="mc-val">${respVals.length ? respAvg + ' min' : '-'}</div>
+      <div class="mc-lbl">Tempo médio 1ª resposta</div>
+    </div>
+    <div class="mc c-indigo">
+      <div class="mc-icon"><i class="ti ti-calendar-time"></i></div>
+      <div class="mc-val">${resolVals.length ? resolAvg.toFixed(1).replace('.', ',') + ' dias' : '-'}</div>
+      <div class="mc-lbl">Tempo médio resolução</div>
+    </div>
+  `;
+}
+
+// ── Charts ────────────────────────────────────────────────────────────────────
+
+function isDarkMode() {
+  return false; // dashboard always uses the light theme
+}
+
+function gridColors() {
+  return { tick: '#6b7280', grid: 'rgba(0,0,0,0.06)' };
+}
+
+function renderChartSetor(data) {
+  const sums = {}, counts = {};
+  data.forEach(r => {
+    if (!r.setor || r.resposta <= 0) return;
+    sums[r.setor] = (sums[r.setor] || 0) + r.resposta;
+    counts[r.setor] = (counts[r.setor] || 0) + 1;
+  });
+
+  const entries = Object.keys(sums)
+    .map(k => ({ setor: k, avg: sums[k] / counts[k] }))
+    .sort((a, b) => b.avg - a.avg);
+
+  const labels = entries.map(e => e.setor);
+  const vals   = entries.map(e => Math.round(e.avg * 10) / 10);
+  const { tick, grid } = gridColors();
+
+  if (chartSetor) chartSetor.destroy();
+  chartSetor = new Chart(document.getElementById('chartSetor'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Minutos',
+        data: vals,
+        backgroundColor: '#1E9E3D',
+        borderRadius: 4,
+        barThickness: 14,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { beginAtZero: true, ticks: { color: tick, font: { size: 11 } }, grid: { color: grid } },
+        y: { ticks: { color: tick, font: { size: 11 } }, grid: { display: false } },
+      },
+      plugins: { legend: { display: false } },
+    },
+  });
+}
+
+function renderChartHoras(data) {
+  const hours = {};
+  for (let h = 0; h <= 23; h++) hours[h] = 0;
+
+  data.forEach(r => {
+    const h = getHour(r.abertura);
+    if (h !== null && h >= 0 && h <= 23) hours[h] = (hours[h] || 0) + 1;
+  });
+
+  const hKeys = Object.keys(hours).map(Number).sort((a, b) => a - b);
+  const { tick, grid } = gridColors();
+
+  if (chartHoras) chartHoras.destroy();
+  chartHoras = new Chart(document.getElementById('chartHoras'), {
+    type: 'line',
+    data: {
+      labels: hKeys.map(h => h + 'h'),
+      datasets: [{
+        label: 'Chamados',
+        data: hKeys.map(h => hours[h]),
+        borderColor: '#2F6FED',
+        backgroundColor: 'rgba(47,111,237,0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 3,
+        pointBackgroundColor: '#2F6FED',
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, font: { size: 11 }, color: tick },
+          grid: { color: grid },
+        },
+        x: {
+          ticks: { font: { size: 10 }, autoSkip: true, maxRotation: 0, color: tick },
+          grid: { display: false },
+        },
+      },
+      plugins: { legend: { display: false } },
+    },
+  });
+}
+
+function renderChartMotivos(data) {
+  const counts = {};
+  data.forEach(r => {
+    const m = (r.solucao || '').trim();
+    if (!m) return;
+    counts[m] = (counts[m] || 0) + 1;
+  });
+
+  const entries = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 7);
+
+  const labels = entries.map(([k]) => k.length > 28 ? k.slice(0, 26) + '…' : k);
+  const vals   = entries.map(([, v]) => v);
+  const { tick, grid } = gridColors();
+
+  if (chartMotivos) chartMotivos.destroy();
+  chartMotivos = new Chart(document.getElementById('chartMotivos'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Chamados',
+        data: vals,
+        backgroundColor: '#7C5CFC',
+        borderRadius: 4,
+        barThickness: 14,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { beginAtZero: true, ticks: { color: tick, font: { size: 11 } }, grid: { color: grid } },
+        y: { ticks: { color: tick, font: { size: 11 } }, grid: { display: false } },
+      },
+      plugins: { legend: { display: false } },
+    },
+  });
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+
+function renderTable() {
+  filteredData = getFiltered();
+  const data = filteredData;
+  const total = data.length;
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  if (currentPage > pages) currentPage = 1;
+
+  const slice = data.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const canalIcon = r => {
+    const d = (r.detalhes || '').toLowerCase() + ' ' + (r.canal || '').toLowerCase();
+    if (d.includes('whatsapp')) return '<i class="ti ti-brand-whatsapp" style="color:#25D366;font-size:14px;vertical-align:-2px"></i> WhatsApp';
+    if (d.includes('email') || d.includes('e-mail')) return '<i class="ti ti-mail" style="font-size:14px;vertical-align:-2px"></i> E-mail';
+    if (d.includes('telefone') || d.includes('phone')) return '<i class="ti ti-phone" style="font-size:14px;vertical-align:-2px"></i> Telefone';
+    if (d.includes('portal')) return '<i class="ti ti-world" style="font-size:14px;vertical-align:-2px"></i> Portal';
+    return esc(r.canal) || '-';
+  };
+
+  document.getElementById('tblBody').innerHTML = slice.length
+    ? slice.map(r => `
+        <tr>
+          <td style="font-weight:600">${esc(r.protocolo)}</td>
+          <td>${esc(r.abertura)}</td>
+          <td>${canalIcon(r)}</td>
+          <td style="text-align:center">${r.tempoAtend || '-'}</td>
+          <td style="text-align:center">${r.resposta || '-'}</td>
+          <td>${esc(r.fechamento) || '-'}</td>
+          <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis">${esc(r.solucao) || '-'}</td>
+          <td style="text-align:center">${r.tempoResol || '-'}</td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">${esc(r.setor) || '-'}</td>
+          <td><span class="badge ${prioClass(r.prioridade)}">${esc(r.prioridade) || '-'}</span></td>
+          <td><span class="badge ${STATUS_MAP[r.status]?.cls || ''}">${STATUS_MAP[r.status]?.label || esc(r.status)}</span></td>
+          <td>${esc(r.criadoPor) || '-'}</td>
+          <td>${esc(r.atendente) || '-'}</td>
+          <td>${esc(r.contato) || '-'}${r.empresa ? `<span class="cell-sub">${esc(r.empresa)}</span>` : ''}</td>
+        </tr>
+      `).join('')
+    : `<tr><td colspan="14" style="text-align:center;padding:40px;color:var(--text-tertiary)">Nenhum resultado encontrado</td></tr>`;
+
+  // Pagination
+  const pg = document.getElementById('pagination');
+  const start = total ? (currentPage - 1) * pageSize + 1 : 0;
+  const end = Math.min(currentPage * pageSize, total);
+  let html = `<span class="pg-info">Mostrando ${start} a ${end} de ${total} registros</span>`;
+
+  if (pages > 1) {
+    html += `<button class="pg-btn" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹ Anterior</button>`;
+    for (let i = 1; i <= pages; i++) {
+      if (i === 1 || i === pages || Math.abs(i - currentPage) <= 1) {
+        html += `<button class="pg-btn ${i === currentPage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+      } else if (Math.abs(i - currentPage) === 2) {
+        html += `<span class="pg-ellipsis">…</span>`;
+      }
+    }
+    html += `<button class="pg-btn" onclick="goPage(${currentPage + 1})" ${currentPage === pages ? 'disabled' : ''}>Próximo ›</button>`;
+  }
+
+  pg.innerHTML = html;
+}
+
+function goPage(p) { currentPage = p; renderTable(); }
+
+// ── Export ────────────────────────────────────────────────────────────────────
+
+function buildExportRows() {
+  return filteredData.map(r => ({
+    'Protocolo': r.protocolo,
+    'Data e Hora da Abertura': r.abertura,
+    'Canal de Abertura': r.canal,
+    'Tempo Gasto no Atendimento (min)': r.tempoAtend,
+    'Tempo da 1ª Resposta (min)': r.resposta,
+    'Data e Hora do Fechamento/Cancelamento': r.fechamento,
+    'Solução do Problema/Motivo Cancelamento': r.solucao,
+    'Tempo Resolução do Chamado (dias)': r.tempoResol,
+    'Setor': r.setor,
+    'Prioridade': r.prioridade,
+    'Status': STATUS_MAP[r.status]?.label || r.status,
+    'Atendimento Criado Por': r.criadoPor,
+    'Atendente': r.atendente,
+    'Contato': r.contato,
+    'Empresa': r.empresa,
+  }));
+}
+
+function exportData(type) {
+  document.getElementById('exportMenu').classList.remove('open');
+  const rows = buildExportRows();
+  if (!rows.length) { alert('Não há dados para exportar.'); return; }
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Atendimentos');
+
+  const filename = 'atendimentos_' + new Date().toISOString().slice(0, 10);
+  if (type === 'csv') {
+    XLSX.writeFile(wb, filename + '.csv', { bookType: 'csv' });
+  } else {
+    XLSX.writeFile(wb, filename + '.xlsx', { bookType: 'xlsx' });
+  }
+}
+
+// ── Event listeners ───────────────────────────────────────────────────────────
+
+document.getElementById('fileInput').addEventListener('change', e => {
+  if (e.target.files[0]) parseXLSX(e.target.files[0]);
+});
+document.getElementById('fileInput2').addEventListener('change', e => {
+  if (e.target.files[0]) parseXLSX(e.target.files[0]);
+});
+
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('drag');
+  if (e.dataTransfer.files[0]) parseXLSX(e.dataTransfer.files[0]);
+});
+
+document.getElementById('btnExport').addEventListener('click', e => {
+  e.stopPropagation();
+  document.getElementById('exportMenu').classList.toggle('open');
+});
+document.addEventListener('click', () => {
+  document.getElementById('exportMenu').classList.remove('open');
+});
+
+
+// ── Sample data (preview only) ──────────────────────────────────────────────
+function loadSampleData() {
+  const setores = ['1-Suporte Sistema A7 e Aplicativos', '2- Financeiro e Licença de uso', '5- SIAH TECH | Assistência Técnica'];
+  const atendentes = ['Jose Souza', 'Neto Gonçalves [Suporte]', 'Lucio [Suporte]', 'Ageu Damasceno', 'Luana | (Financeiro)', 'Landyson Arruda'];
+  const status = ['Fechado','Fechado','Fechado','Cancelado','Atendendo','AguardandoAvaliacao','FechadoAssistenteVirtualInatividade'];
+  const canais = ['WhatsApp','E-mail','Telefone','Portal'];
+  const prioridades = ['Alta','Média','Baixa'];
+  const solucoes = ['Dúvida sobre fatura','Erro no sistema','Cancelamento de serviço','Acesso ao sistema','Solicitação de relatório','Instalação de software','Alteração de cadastro','Informações de contrato'];
+  const empresas = ['Empresa ABC Ltda','Indústria XPTO','Comércio Alfa','Serviços Beta','Transportes Sul'];
+  const contatos = ['João Silva','Maria Santos','Carlos Lima','Mara Lúcia','Fernando Costa','Ricardo Almeida'];
+
+  allData = [];
+  for (let i = 0; i < 60; i++) {
+    const day = String(1 + (i % 28)).padStart(2, '0');
+    const hour = String(6 + (i % 18)).padStart(2, '0');
+    const min = String((i * 7) % 60).padStart(2, '0');
+    const st = status[i % status.length];
+    allData.push({
+      protocolo: '2026061' + String(1000 + i),
+      abertura: `${day}/06/2026 - ${hour}:${min}`,
+      canal: canais[i % canais.length],
+      detalhes: canais[i % canais.length],
+      atendente: atendentes[i % atendentes.length],
+      setor: setores[i % setores.length],
+      status: st,
+      prioridade: prioridades[i % prioridades.length],
+      criadoPor: i % 3 === 0 ? 'Portal' : 'Sistema',
+      contato: contatos[i % contatos.length],
+      empresa: empresas[i % empresas.length],
+      resposta: 1 + (i % 25),
+      tempoAtend: 5 + (i % 40),
+      fechamento: (st === 'Fechado' || st === 'Cancelado') ? `${day}/06/2026 - ${String((+hour+2)%24).padStart(2,'0')}:${min}` : '',
+      tempoResol: (st === 'Fechado' || st === 'Cancelado') ? Math.round(((i % 5) + 0.3) * 10) / 10 : 0,
+      solucao: (st === 'Fechado' || st === 'Cancelado') ? solucoes[i % solucoes.length] : '',
+      descricao: '',
+    });
+  }
+
+  populateFilters();
+  document.getElementById('uploadSection').style.display = 'none';
+  document.getElementById('dashSection').style.display = 'block';
+  document.getElementById('exportWrap').style.display = 'block';
+  document.getElementById('lastUpdate').innerHTML =
+    '<i class="ti ti-clock"></i> Atualizado: ' + new Date().toLocaleString('pt-BR');
+  currentPage = 1;
+  update();
+}
+
+  </script>
+</body>
+</html>

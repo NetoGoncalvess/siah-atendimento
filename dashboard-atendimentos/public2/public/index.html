@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Atendimentos</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title"><i class="ti ti-headset"></i>Dashboard de Atendimentos</div>
+        <div class="topbar-sub">Visão geral dos atendimentos registrados</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-update" id="lastUpdate"></div>
+        <div class="export-wrap" id="exportWrap" style="display:none">
+          <button class="btn-export" id="btnExport"><i class="ti ti-download"></i> Exportar <i class="ti ti-chevron-down"></i></button>
+          <div class="export-menu" id="exportMenu">
+            <button onclick="exportData('xlsx')"><i class="ti ti-file-spreadsheet"></i> Excel (.xlsx)</button>
+            <button onclick="exportData('csv')"><i class="ti ti-file-text"></i> CSV</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="uploadSection">
+      <div class="upload-zone" id="dropZone">
+        <div class="upload-icon"><i class="ti ti-file-spreadsheet"></i></div>
+        <div class="upload-title">Arraste seu Excel aqui</div>
+        <div class="upload-hint">ou clique para selecionar o arquivo de exportação</div>
+        <label class="upload-btn">
+          <i class="ti ti-upload"></i> Selecionar arquivo
+          <input type="file" id="fileInput" accept=".xlsx,.xls">
+        </label>
+      </div>
+    </div>
+
+    <div id="dashSection" style="display:none">
+      <div class="filters-card">
+        <div class="filters-label">Filtros</div>
+        <div class="filters-row">
+          <div class="filter-group wide">
+            <label>Período</label>
+            <div class="date-range">
+              <input type="date" class="filter-date" id="fDataIni">
+              <span>até</span>
+              <input type="date" class="filter-date" id="fDataFim">
+            </div>
+          </div>
+          <div class="filter-group">
+            <label>Setor</label>
+            <select class="filter-sel" id="fSetor"><option value="">Todos</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Atendente</label>
+            <select class="filter-sel" id="fAtendente"><option value="">Todos</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Status</label>
+            <select class="filter-sel" id="fStatus"><option value="">Todos</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Prioridade</label>
+            <select class="filter-sel" id="fPrioridade"><option value="">Todas</option></select>
+          </div>
+          <div class="filter-group">
+            <label>Canal de Abertura</label>
+            <select class="filter-sel" id="fCanal"><option value="">Todos</option></select>
+          </div>
+          <div class="filter-group" style="flex-direction:row; gap:8px;">
+            <button class="btn-filtrar" onclick="applyFilters()"><i class="ti ti-search"></i> Filtrar</button>
+            <button class="btn-clear" onclick="clearFilters()"><i class="ti ti-refresh"></i> Limpar filtros</button>
+          </div>
+          <div class="filter-group" style="margin-left:auto; flex-direction:row;">
+            <label class="upload-btn secondary" style="font-size:12px;padding:8px 14px;height:36px;">
+              <i class="ti ti-refresh"></i> Novo arquivo
+              <input type="file" id="fileInput2" accept=".xlsx,.xls" style="display:none">
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="metrics" id="metrics"></div>
+
+        <div class="charts-row">
+          <div class="card">
+            <div class="card-title">Tempo da 1ª resposta por setor</div>
+            <div class="card-sub">(Média em minutos)</div>
+            <div style="position:relative;height:230px">
+              <canvas id="chartSetor" role="img" aria-label="Gráfico de barras com tempo médio de 1ª resposta por setor"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Horário com maior fluxo</div>
+            <div class="card-sub">(Quantidade de chamados)</div>
+            <div style="position:relative;height:230px">
+              <canvas id="chartHoras" role="img" aria-label="Gráfico de linha com volume de chamados por hora"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Soluções / motivo cancelamento</div>
+            <div class="card-sub">(Top 7)</div>
+            <div style="position:relative;height:230px">
+              <canvas id="chartMotivos" role="img" aria-label="Gráfico de barras com principais motivos e soluções"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <div class="card-title" style="margin:0">Lista de atendimentos</div>
+            <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap">
+              <div class="page-size-wrap">
+                Mostrar
+                <select id="pageSize" onchange="changePageSize()">
+                  <option value="10">10</option>
+                  <option value="15" selected>15</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+                registros
+              </div>
+              <div class="tbl-search-wrap">
+                <i class="ti ti-search"></i>
+                <input class="tbl-search" id="tblSearch" placeholder="Buscar..." oninput="renderTable()">
+              </div>
+            </div>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Protocolo</th>
+                  <th>Data e Hora da Abertura</th>
+                  <th>Canal de Abertura</th>
+                  <th>Tempo Atendimento (min)</th>
+                  <th>Tempo 1ª Resposta (min)</th>
+                  <th>Fechamento/Cancelamento</th>
+                  <th>Solução / Motivo Cancelamento</th>
+                  <th>Tempo Resolução (dias)</th>
+                  <th>Setor</th>
+                  <th>Prioridade</th>
+                  <th>Status</th>
+                  <th>Criado Por</th>
+                  <th>Atendente</th>
+                  <th>Contato / Empresa</th>
+                </tr>
+              </thead>
+              <tbody id="tblBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
