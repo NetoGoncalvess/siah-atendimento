@@ -49,7 +49,7 @@ type EvolutionPayload = {
     };
     messageType?: string;
     pushName?: string;
-    messageTimestamp?: number | string;
+    messageTimestamp?: number;
   };
 };
 
@@ -86,10 +86,6 @@ async function processarEvento(payload: EvolutionPayload) {
   const tipo = mapTipo(data.messageType ?? "");
   const whatsappId = data.key.id ?? "";
   const nomeContato = data.pushName;
-
-  // A Evolution API manda messageTimestamp em epoch SEGUNDOS (não milissegundos).
-  // Pode vir como number ou string dependendo da versão — tratamos os dois casos.
-  const dataEnvio = parseTimestamp(data.messageTimestamp);
 
   // 1. Cria ou atualiza o contato
   const contato = await prisma.contato.upsert({
@@ -134,28 +130,10 @@ async function processarEvento(payload: EvolutionPayload) {
       conteudo: texto,
       whatsappMessageId: whatsappId || null,
       status: "received",
-      createdAt: dataEnvio, // horário real do envio, não o do processamento
     },
   });
 
   console.log(`✅ Mensagem salva | Contato: ${telefone} | Ticket: ${ticket.protocolo}`);
-}
-
-function parseTimestamp(ts: number | string | undefined): Date {
-  if (ts == null) return new Date();
-
-  const n = typeof ts === "string" ? Number(ts) : ts;
-  if (!Number.isFinite(n) || n <= 0) return new Date();
-
-  // Evolution/Baileys manda em epoch SEGUNDOS. Se vier maior que isso,
-  // já está em milissegundos (heurística: 10 dígitos = segundos, 13 = ms).
-  const ms = n < 10_000_000_000 ? n * 1000 : n;
-
-  const data = new Date(ms);
-  // Sanity check: se vier um timestamp absurdo (ex: epoch 0 ou no futuro distante), usa now()
-  if (isNaN(data.getTime()) || data.getFullYear() < 2020) return new Date();
-
-  return data;
 }
 
 function mapTipo(messageType: string): "TEXTO" | "IMAGEM" | "AUDIO" | "VIDEO" | "DOCUMENTO" | "LOCALIZACAO" | "OUTRO" {
